@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Fitness Prime</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS - TWEAKED FOR A SLICKER LOOK
+    ============================================================ */
+    :root {
+      --bg:            #0A0A0A; /* Deeper black for a more premium OLED feel */
+      --bg-card:       #141414;
+      --bg-card-2:     #1C1C1C;
+      --bg-input:      #0F0F0F;
+      --accent:        #BE00FE;
+      --accent-glow:   rgba(190,0,254,0.25);
+      --accent-dim:    rgba(190,0,254,0.08);
+      --accent-border: rgba(190,0,254,0.30);
+      --text-h:        #FFFFFF;
+      --text-b:        #A3A3A3;
+      --text-muted:    #555555;
+      --border:        rgba(255,255,255,0.04); /* Softer borders */
+      --success:       #00E5A0;
+      --warn:          #FFC87A;
+      --danger:        #FF5E5E;
+      --nav-h:         64px;
+      --safe-b:        env(safe-area-inset-bottom, 0px);
+      --r-sm:  8px;
+      --r-md:  14px;
+      --r-lg:  20px;
+      --r-xl:  28px;
+      --ease:  cubic-bezier(.4,0,.2,1);
+      --font-d: 'Syne', sans-serif;
+      --font-b: 'DM Sans', sans-serif;
+      --font-m: 'JetBrains Mono', monospace;
+    }
+
+    /* ============================================================
+       RESET
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text-h);
+      font-family: var(--font-b);
+      font-size: 16px;
+      line-height: 1.6;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.028'/%3E%3C/svg%3E");
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ============================================================
+       APP SHELL
+    ============================================================ */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* ============================================================
+       TOP STATUS BAR 
+    ============================================================ */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px 10px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .top-bar-logo {
+      font-family: var(--font-d);
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: .5px;
+      color: var(--text-h);
+    }
+    .top-bar-logo span { color: var(--accent); text-shadow: 0 0 12px var(--accent-glow); }
+    .top-bar-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .streak-pill {
+      font-family: var(--font-m);
+      font-size: 11px;
+      padding: 4px 10px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: 100px;
+      color: var(--accent);
+    }
+
+    /* ============================================================
+       VIEWS CONTAINER
+    ============================================================ */
+    .views-wrap {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .view {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 24px 16px calc(var(--nav-h) + var(--safe-b) + 24px);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: opacity .28s var(--ease), transform .28s var(--ease);
+      scrollbar-width: none;
+    }
+    .view::-webkit-scrollbar { display: none; }
+    .view.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    /* ============================================================
+       BOTTOM NAV
+    ============================================================ */
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: calc(var(--nav-h) + var(--safe-b));
+      padding-bottom: var(--safe-b);
+      background: rgba(10,10,10,.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: stretch;
+      z-index: 100;
+    }
+    .nav-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-b);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      -webkit-tap-highlight-color: transparent;
+      transition: color .2s var(--ease);
+      position: relative;
+    }
+    .nav-tab .tab-icon {
+      font-size: 22px;
+      line-height: 1;
+      transition: transform .25s var(--ease), filter .25s var(--ease);
+    }
+    .nav-tab:hover  { color: var(--text-b); }
+    .nav-tab.active { color: var(--accent); }
+    .nav-tab.active .tab-icon {
+      transform: translateY(-2px) scale(1.1);
+      filter: drop-shadow(0 0 6px var(--accent-glow));
+    }
+    .nav-tab::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 20%; right: 20%;
+      height: 2px;
+      background: var(--accent);
+      border-radius: 0 0 4px 4px;
+      box-shadow: 0 0 8px var(--accent);
+      opacity: 0;
+      transform: scaleX(0);
+      transition: opacity .2s, transform .25s var(--ease);
+    }
+    .nav-tab.active::after { opacity: 1; transform: scaleX(1); }
+
+    /* ============================================================
+       SHARED COMPONENTS
+    ============================================================ */
+    .eyebrow {
+      font-family: var(--font-m);
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+
+    .view-title {
+      font-family: var(--font-d);
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1.05;
+      margin-bottom: 4px;
+    }
+    .view-sub {
+      font-size: 13px;
+      color: var(--text-b);
+      margin-bottom: 22px;
+    }
+
+    /* Slicker Cards with Drop Shadows */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 20px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .card:focus-within {
+      border-color: var(--accent-border);
+      box-shadow: 0 0 0 1px var(--accent-dim), 0 8px 24px rgba(0,0,0,0.6);
+    }
+    .card::after {
+      content: '';
+      position: absolute;
+      top: -50px; right: -50px;
+      width: 130px; height: 130px;
+      background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .field-label {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      color: var(--text-b);
+      margin-bottom: 10px;
+    }
+    .live-dot {
+      width: 7px; height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+      animation: blink-dot 2.5s ease-in-out infinite;
+    }
+    @keyframes blink-dot {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:.4; transform:scale(.7); }
+    }
+
+    .field-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+      color: var(--text-h);
+      font-family: var(--font-b);
+      font-size: 15px;
+      line-height: 1.65;
+      outline: none;
+      caret-color: var(--accent);
+      transition: border-color .2s, background .2s;
+      resize: none;
+    }
+    .field-input::placeholder { color: var(--text-muted); font-style: normal; }
+    .field-input:focus { 
+        border-color: var(--accent-border); 
+        background: #121212;
+    }
+    textarea.field-input { min-height: 110px; }
+
+    .btn-primary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 16px 20px;
+      margin-top: 14px;
+      background: var(--accent);
+      color: #000;
+      font-family: var(--font-d);
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      border: none;
+      border-radius: var(--r-md);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 4px 22px var(--accent-glow);
+      transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,.16), transparent);
+      transform: translateX(-120%);
+      transition: transform .5s ease;
+    }
+    .btn-primary:hover::before { transform: translateX(120%); }
+    .btn-primary:hover   { transform: translateY(-2px); box-shadow: 0 8px 28px var(--accent-glow); }
+    .btn-primary:active  { transform: scale(.98) translateY(0); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(0,0,0,.25);
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .loading .spinner { display: block; }
+    .loading .btn-label { display: none; }
+
+    .result-panel {
+      animation: slideUp .35s var(--ease) both;
+    }
+    @keyframes slideUp {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ============================================================
+       VIEW 1 — WORKOUT LOG
+    ============================================================ */
+    .exercise-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; }
+
+    .ex-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      animation: cardIn .32s var(--ease) both;
+      transition: border-color .2s, transform .2s;
+    }
+    .ex-card:hover { border-color: var(--accent-border); transform: translateX(3px); }
+    @keyframes cardIn {
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .ex-num {
+      width: 30px; height: 30px;
+      min-width: 30px;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-m);
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .ex-body { flex:1; min-width:0; }
+    .ex-name {
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 5px;
+    }
+    .ex-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag {
+      font-family: var(--font-m);
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 100px;
+      border: 1px solid;
+    }
+    .tag-s { color:#7EC8E3; border-color:rgba(126,200,227,.25); background:rgba(126,200,227,.07); }
+    .tag-r { color:var(--success); border-color:rgba(0,229,160,.25); background:rgba(0,229,160,.07); }
+    .tag-w { color:var(--warn);    border-color:rgba(255,200,122,.25); background:rgba(255,200,122,.07); }
+
+    .hype-card {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--r-md);
+      padding: 16px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      animation: cardIn .35s .25s var(--ease) both;
+    }
+    .hype-emoji { font-size: 22px; flex-shrink:0; }
+    .hype-text  { font-size: 14px; font-weight: 600; color: var(--accent); line-height: 1.5; text-shadow: 0 0 20px var(--accent-glow); }
+
+    .stat-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .stat-pill {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      padding: 12px 8px;
+      text-align: center;
+      animation: cardIn .3s var(--ease) both;
+    }
+    .stat-val {
+      font-family: var(--font-d);
+      font-size: 26px;
+      color: var(--accent);
+      text-shadow: 0 0 14px var(--accent-glow);
+      line-height: 1;
+    }
+    .stat-lbl {
+      font-family: var(--font-m);
+      font-size: 9px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* ============================================================
+       VIEW 2 — NUTRITION TRACKER (Cleaned up)
+    ============================================================ */
+    .macro-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-lg);
+      padding: 20px;
+      margin-bottom: 14px;
+    }
+    .macro-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .macro-food-name {
+      font-family: var(--font-d);
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-h);
+      max-width: 65%;
+      line-height: 1.2;
+    }
+    .calorie-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .calorie-number {
+      font-family: var(--font-d);
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--accent);
+      text-shadow: 0 0 20px var(--accent-glow);
+      line-height: 1;
+    }
+    .calorie-label {
+      font-family: var(--font-m);
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .macro-bars { display: flex; flex-direction: column; gap: 12px; }
+    .macro-row { display: flex; flex-direction: column; gap: 5px; }
+    .macro-row-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .macro-name { font-weight: 700; color: var(--text-b); }
+    .macro-grams { font-family: var(--font-m); font-size: 12px; }
+
+    .bar-track {
+      height: 6px;
+      background: rgba(255,255,255,.06);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      width: 0; 
+      transition: width .8s var(--ease);
+    }
+    .bar-p { background: linear-gradient(90deg, #7EC8E3, #4aaed4); }
+    .bar-c { background: linear-gradient(90deg, var(--warn), #e8a840); }
+    .bar-f { background: linear-gradient(90deg, var(--danger), #d44); }
+
+    .serving-note {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: var(--font-m);
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+
+    /* ============================================================
+       VIEW 3 — SMART TIMER (Cleaned up)
+    ============================================================ */
+    .timer-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0 20px;
+    }
+
+    .ring-wrap {
+      position: relative;
+      width: 240px;
+      height: 240px;
+      margin-bottom: 40px; /* Increased margin since preset text is gone */
+    }
+    .ring-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+    .ring-track {
+      fill: none;
+      stroke: rgba(255,255,255,.03);
+      stroke-width: 8;
+    }
+    .ring-prog {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 691; 
+      stroke-dashoffset: 0;
+      filter: drop-shadow(0 0 8px var(--accent-glow));
+      transition: stroke-dashoffset .4s linear, stroke .3s;
+    }
+    .timer-face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .timer-display {
+      font-family: var(--font-m);
+      font-size: 56px;
+      font-weight: 700;
+      color: var(--text-h);
+      letter-spacing: 2px;
+      line-height: 1;
+      text-shadow: 0 0 30px rgba(255,255,255,.12);
+    }
+    .timer-status {
+      font-family: var(--font-m);
+      font-size: 10px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .timer-status.running { color: var(--success); }
+    .timer-status.paused  { color: var(--warn); }
+
+    .preset-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      width: 100%;
+    }
+    .preset-btn {
+      flex: 1;
+      padding: 10px 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-md);
+      color: var(--text-b);
+      font-family: var(--font-m);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color .2s, color .2s, background .2s;
+      -webkit-tap-highlight-color: transparent;
+      text-align: center;
+    }
+    .preset-btn:hover,
+    .preset-btn.selected {
+      border-color: var(--accent-border);
+      color: var(--accent);
+      background: var(--accent-dim);
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+    .btn-timer {
+      flex: 1;
+      padding: 16px 10px;
+      border-radius: var(--r-md);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-h);
+      font-family: var(--font-d);
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: border-color .2s, background .2s, transform .15s, box-shadow .2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-timer:active { transform: scale(.96); }
+    .btn-timer.start {
+      background: var(--accent);
+      color: #000;
+      border-color: var(--accent);
+      box-shadow: 0 4px 18px var(--accent-glow);
+    }
+    .btn-timer.start:hover { box-shadow: 0 6px 24px var(--accent-glow); transform: translateY(-1px); }
+    .btn-timer.pause { border-color: var(--accent-border); color: var(--accent); }
+    .btn-timer.pause:hover { background: var(--accent-dim); }
+    .btn-timer.reset:hover { border-color: rgba(255,94,94,.3); color: var(--danger); }
+
+    /* ============================================================
+       UTILITY & RESPONSIVE
+    ============================================================ */
+    .hidden { display: none !important; }
+    @media (max-width: 360px) {
+      .view-title { font-size: 28px; }
+      .timer-display { font-size: 46px; }
+      .ring-wrap { width: 200px; height: 200px; }
+    }
+    @media (min-width: 520px) {
+      .view { padding-left: 24px; padding-right: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+
+  <header class="top-bar">
+    <div class="top-bar-logo">FITNESS <span>PRIME</span></div>
+    <div class="top-bar-right">
+      <div class="streak-pill">🔥 7-DAY STREAK</div>
+    </div>
+  </header>
+
+  <div class="views-wrap">
+
+    <section class="view active" id="view-workout" aria-label="Workout Log">
+      <p class="eyebrow">Lazy Log™</p>
+      <h1 class="view-title">Log Your<br>Session</h1>
+      <p class="view-sub">Type it naturally — we'll parse the rest.</p>
+
+      <div class="card" id="workout-input-card">
+        <div class="field-label"><span class="live-dot"></span> Quick Log</div>
+        <textarea
+          id="workout-text"
+          class="field-input"
+          placeholder="e.g. 4 sets bench press 135lbs 10 reps, then 3 sets tricep pushdowns 50lbs 12 reps…"
+          maxlength="500"
+        ></textarea>
+        <div style="display:flex;justify-content:space-between;margin-top:7px;font-size:11px;color:var(--text-muted);font-family:var(--font-m)">
+          <span>Ctrl+Enter to log</span>
+          <span id="wc-count">0 / 500</span>
+        </div>
+        <button class="btn-primary" id="btn-log-workout" onclick="handleWorkoutLog()">
+          <div class="spinner" id="w-spinner"></div>
+          <span class="btn-label">LOG WORKOUT →</span>
+        </button>
+      </div>
+      <div id="workout-results" class="hidden"></div>
+    </section>
+
+    <section class="view" id="view-nutrition" aria-label="Nutrition Tracker">
+      <div class="card" id="nutrition-input-card" style="margin-top: 10px;">
+        <div class="field-label"><span class="live-dot"></span> Meal Description</div>
+        <input
+          type="text"
+          id="food-text"
+          class="field-input"
+          placeholder="e.g. 2 scrambled eggs with toast and a banana…"
+        />
+        <button class="btn-primary" id="btn-calc-macros" onclick="handleNutrition()">
+          <div class="spinner" id="n-spinner"></div>
+          <span class="btn-label">CALCULATE MACROS →</span>
+        </button>
+      </div>
+      <div id="nutrition-results" class="hidden"></div>
+    </section>
+
+    <section class="view" id="view-timer" aria-label="Smart Timer">
+      <p class="eyebrow">Smart Timer</p>
+      <h1 class="view-title">Rest &<br>Recover</h1>
+
+      <div class="timer-wrap">
+        <div class="ring-wrap" aria-label="Timer visual">
+          <svg class="ring-svg" viewBox="0 0 240 240">
+            <circle class="ring-track" cx="120" cy="120" r="110"/>
+            <circle class="ring-prog" id="ring-prog" cx="120" cy="120" r="110"/>
+          </svg>
+          <div class="timer-face">
+            <div class="timer-display" id="timer-display" aria-live="polite">00:00</div>
+            <div class="timer-status" id="timer-status">READY</div>
+          </div>
+        </div>
+
+        <div class="preset-row" role="group" aria-label="Timer presets">
+          <button class="preset-btn" onclick="setPreset(this, 30)"   data-sec="30">30s</button>
+          <button class="preset-btn" onclick="setPreset(this, 60)"   data-sec="60">1 min</button>
+          <button class="preset-btn" onclick="setPreset(this, 90)"   data-sec="90">90s</button>
+          <button class="preset-btn" onclick="setPreset(this, 120)"  data-sec="120">2 min</button>
+          <button class="preset-btn" onclick="setPreset(this, 180)"  data-sec="180">3 min</button>
+        </div>
+
+        <div class="timer-controls" role="group" aria-label="Timer controls">
+          <button class="btn-timer start" id="btn-start" onclick="timerStart()" aria-label="Start timer">
+            ▶ START
+          </button>
+          <button class="btn-timer pause" id="btn-pause" onclick="timerPause()" aria-label="Pause timer">
+            ⏸
+          </button>
+          <button class="btn-timer reset" id="btn-reset" onclick="timerReset()" aria-label="Reset timer">
+            ↺ RESET
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <nav class="bottom-nav" role="navigation" aria-label="Main navigation">
+    <button class="nav-tab active" id="tab-workout"   onclick="switchTab('workout')"   aria-label="Workout tab"   aria-selected="true"  role="tab">
+      <span class="tab-icon">🏋️</span>
+      <span>Workout</span>
+    </button>
+    <button class="nav-tab"        id="tab-nutrition" onclick="switchTab('nutrition')" aria-label="Nutrition tab" aria-selected="false" role="tab">
+      <span class="tab-icon">🥗</span>
+      <span>Nutrition</span>
+    </button>
+    <button class="nav-tab"        id="tab-timer"     onclick="switchTab('timer')"     aria-label="Timer tab"     aria-selected="false" role="tab">
+      <span class="tab-icon">⏱️</span>
+      <span>Timer</span>
+    </button>
+  </nav>
+
+</div>
+
+<script>
+/* ----------------------------------------------------------------
+   TAB NAVIGATION
+---------------------------------------------------------------- */
+function switchTab(name) {
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.classList.remove('active');
+    t.setAttribute('aria-selected', 'false');
+  });
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
+  document.getElementById(`tab-${name}`).classList.add('active');
+  document.getElementById(`tab-${name}`).setAttribute('aria-selected', 'true');
+  document.getElementById(`view-${name}`).classList.add('active');
+
+  document.getElementById(`view-${name}`).scrollTop = 0;
+}
+
+/* ================================================================
+   VIEW 1 — WORKOUT LOG
+================================================================ */
+const workoutText = document.getElementById('workout-text');
+workoutText.addEventListener('input', () => {
+  const len = workoutText.value.length;
+  const el  = document.getElementById('wc-count');
+  el.textContent = `${len} / 500`;
+  el.style.color = len > 450 ? 'var(--warn)' : 'var(--text-muted)';
+});
+
+workoutText.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') handleWorkoutLog();
+});
+
+function parseWorkout(text) {
+  const segments = text
+    .split(/,\s*(?:then|and|also|plus)?\s*|;\s*|\bthen\b|\band\b|\balso\b/i)
+    .map(s => s.trim()).filter(s => s.length > 2);
+
+  return segments.map(seg => {
+    let sets = 3;
+    const sm = seg.match(/(\d+)\s*(?:sets?|x)\s*(?:of\s*)?/i);
+    if (sm) sets = parseInt(sm[1]);
+
+    let reps = null;
+    const rm = seg.match(/(?:for\s+)?(\d+)\s*(?:reps?|repetitions?)/i) || seg.match(/x\s*(\d+)\b/i);
+    if (rm) reps = parseInt(rm[1]);
+
+    let weight = null;
+    const wm = seg.match(/(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?|kg)/i);
+    if (wm)           weight = `${wm[1]} ${/kg/i.test(wm[0]) ? 'kg' : 'lbs'}`;
+    else if (/\bbw\b|bodyweight/i.test(seg)) weight = 'BW';
+
+    let name = seg
+      .replace(/(\d+)\s*(?:sets?|x)\s*(?:of\s*)?/gi, '')
+      .replace(/(?:for\s+)?(\d+)\s*(?:reps?|repetitions?)/gi, '')
+      .replace(/(\d+(?:\.\d+)?)\s*(?:lbs?|pounds?|kg)/gi, '')
+      .replace(/\bat\b|\bof\b/gi, '')
+      .replace(/\s{2,}/g, ' ').trim()
+      .replace(/\b\w/g, c => c.toUpperCase());
+
+    return { name: name || 'Exercise', sets, reps, weight };
+  });
+}
+
+const HYPE = [
+  { e:'💜', t:'Solid volume today! Prime Time energy on full display.' },
+  { e:'🔥', t:'Champions don\'t skip. Legends log. That\'s you.' },
+  { e:'⚡', t:'Every rep is compound interest on your future self.' },
+  { e:'🏆', t:'Consistency over intensity — today you brought both.' },
+  { e:'🚀', t:'Session banked. Progress is permanent. See you tomorrow.' },
+  { e:'💪', t:'Pain is just weakness filing its resignation letter.' },
+  { e:'🎯', t:'Precision. Volume. Grit. Every box checked. Prime Time.' },
+];
+
+function handleWorkoutLog() {
+  const text = workoutText.value.trim();
+  const btn  = document.getElementById('btn-log-workout');
+  const res  = document.getElementById('workout-results');
+
+  if (!text) {
+    workoutText.style.borderColor = 'rgba(255,94,94,.5)';
+    setTimeout(() => workoutText.style.borderColor = '', 2000);
+    workoutText.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  document.getElementById('w-spinner').style.display = 'block';
+  res.classList.add('hidden');
+
+  setTimeout(() => {
+    const exercises = parseWorkout(text);
+    const totalSets   = exercises.reduce((s, e) => s + (e.sets||0), 0);
+    let   totalVol    = 0;
+    
+    exercises.forEach(e => {
+      if (e.sets && e.reps && e.weight && e.weight !== 'BW') {
+        totalVol += e.sets * e.reps * parseFloat(e.weight);
+      }
+    });
+
+    let html = `<div class="stat-row result-panel">
+      <div class="stat-pill" style="animation-delay:.02s">
+        <div class="stat-val">${exercises.length}</div>
+        <div class="stat-lbl">Exercises</div>
+      </div>
+      <div class="stat-pill" style="animation-delay:.06s">
+        <div class="stat-val">${totalSets}</div>
+        <div class="stat-lbl">Total Sets</div>
+      </div>
+      <div class="stat-pill" style="animation-delay:.10s">
+        <div class="stat-val">${totalVol > 0 ? (totalVol/1000).toFixed(1)+'k' : '—'}</div>
+        <div class="stat-lbl">Volume</div>
+      </div>
+    </div>`;
+
+    html += `<div class="exercise-list result-panel">`;
+    exercises.forEach((ex, i) => {
+      const setTag = `<span class="tag tag-s">🔁 ${ex.sets} sets</span>`;
+      const repTag = ex.reps   ? `<span class="tag tag-r">✕ ${ex.reps} reps</span>` : '';
+      const wTag   = ex.weight ? `<span class="tag tag-w">⚖ ${ex.weight}</span>` : '';
+      html += `
+        <div class="ex-card" style="animation-delay:${i*0.06}s">
+          <div class="ex-num">${String(i+1).padStart(2,'0')}</div>
+          <div class="ex-body">
+            <div class="ex-name">${esc(ex.name)}</div>
+            <div class="ex-tags">${setTag}${repTag}${wTag}</div>
+          </div>
+          <span style="opacity:.35;font-size:16px">☑</span>
+        </div>`;
+    });
+    html += `</div>`;
+
+    const h = HYPE[Math.floor(Math.random() * HYPE.length)];
+    html += `<div class="hype-card result-panel">
+      <span class="hype-emoji">${h.e}</span>
+      <p class="hype-text">${h.t}</p>
+    </div>`;
+
+    res.innerHTML = html;
+    res.classList.remove('hidden');
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    document.getElementById('w-spinner').style.display = 'none';
+    res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 1000);
+}
+
+/* ================================================================
+   VIEW 2 — NUTRITION TRACKER
+================================================================ */
+const FOOD_DB = [
+  { keys: ['egg','eggs','scrambled egg'],       cal:155, protein:13, carbs:1,  fat:11, serving:'per 2 eggs' },
+  { keys: ['chicken breast','chicken'],         cal:165, protein:31, carbs:0,  fat:4,  serving:'per 100g' },
+  { keys: ['banana'],                           cal:105, protein:1,  carbs:27, fat:0,  serving:'per medium banana' },
+  { keys: ['oatmeal','oats','porridge'],        cal:150, protein:5,  carbs:27, fat:3,  serving:'per 40g dry' },
+  { keys: ['rice','white rice','brown rice'],   cal:200, protein:4,  carbs:45, fat:1,  serving:'per 150g cooked' },
+  { keys: ['toast','bread','slice of bread'],   cal:80,  protein:3,  carbs:15, fat:1,  serving:'per slice' },
+  { keys: ['protein shake','whey','shake'],     cal:130, protein:25, carbs:5,  fat:2,  serving:'per scoop' },
+  { keys: ['salmon','grilled salmon'],          cal:208, protein:20, carbs:0,  fat:13, serving:'per 100g' },
+  { keys: ['salad','green salad'],              cal:60,  protein:2,  carbs:8,  fat:3,  serving:'per bowl' },
+  { keys: ['pasta','spaghetti'],                cal:220, protein:8,  carbs:44, fat:1,  serving:'per 80g dry' },
+  { keys: ['steak','beef'],                     cal:271, protein:26, carbs:0,  fat:18, serving:'per 100g' },
+  { keys: ['yogurt','greek yogurt'],            cal:100, protein:17, carbs:6,  fat:0,  serving:'per 170g' },
+  { keys: ['apple'],                            cal:95,  protein:0,  carbs:25, fat:0,  serving:'per medium apple' },
+  { keys: ['pizza'],                            cal:285, protein:12, carbs:36, fat:10, serving:'per slice' },
+  { keys: ['burger','hamburger'],               cal:500, protein:28, carbs:40, fat:23, serving:'per burger' },
+  { keys: ['almonds','almond'],                 cal:164, protein:6,  carbs:6,  fat:14, serving:'per 28g' },
+  { keys: ['avocado'],                          cal:160, protein:2,  carbs:9,  fat:15, serving:'per half' },
+  { keys: ['milk'],                             cal:149, protein:8,  carbs:12, fat:8,  serving:'per 240ml' },
+  { keys: ['peanut butter'],                    cal:188, protein:8,  carbs:6,  fat:16, serving:'per 2 tbsp' },
+  { keys: ['tuna'],                             cal:110, protein:25, carbs:0,  fat:1,  serving:'per 100g' },
+];
+
+function extractQty(text, keyword) {
+  const qtyPattern = new RegExp(`(\\d+(?:\\.\\d+)?)\\s*(?:servings?|slices?|pieces?|cups?|scoops?|)?\\s*(?:of\\s*)?${keyword.split(' ')[0]}`, 'i');
+  const m = text.match(qtyPattern);
+  return m ? parseFloat(m[1]) : 1;
+}
+
+function parseMacros(text) {
+  const lower = text.toLowerCase();
+  let total = { cal:0, protein:0, carbs:0, fat:0 };
+  const matched = [];
+
+  FOOD_DB.forEach(food => {
+    food.keys.forEach(k => {
+      if (lower.includes(k)) {
+        const qty = extractQty(lower, k);
+        total.cal     += food.cal * qty;
+        total.protein += food.protein * qty;
+        total.carbs   += food.carbs * qty;
+        total.fat     += food.fat * qty;
+        matched.push(food.keys[0]);
+      }
+    });
+  });
+
+  if (matched.length === 0) {
+    total = { cal: 380, protein: 18, carbs: 42, fat: 12 };
+    matched.push('unknown food');
+  }
+
+  const label = text.length > 40 ? text.slice(0,40) + '…' : text;
+  return { label, ...total, matched: [...new Set(matched)] };
+}
+
+function handleNutrition() {
+  const text = document.getElementById('food-text').value.trim();
+  const btn  = document.getElementById('btn-calc-macros');
+  const res  = document.getElementById('nutrition-results');
+
+  if (!text) {
+    document.getElementById('food-text').style.borderColor = 'rgba(255,94,94,.5)';
+    setTimeout(() => document.getElementById('food-text').style.borderColor = '', 2000);
+    document.getElementById('food-text').focus();
+    return;
+  }
+
+  btn.disabled = true;
+  btn.classList.add('loading');
+  document.getElementById('n-spinner').style.display = 'block';
+  res.classList.add('hidden');
+
+  setTimeout(() => {
+    const m = parseMacros(text);
+    const cal = Math.round(m.cal);
+    const p   = Math.round(m.protein);
+    const c   = Math.round(m.carbs);
+    const f   = Math.round(m.fat);
+    const max = Math.max(p, c, f, 1); 
+
+    const html = `
+    <div class="macro-card result-panel">
+      <div class="macro-header">
+        <div class="macro-food-name">${esc(m.label)}</div>
+        <div class="calorie-badge">
+          <div class="calorie-number">${cal}</div>
+          <div class="calorie-label">CALORIES</div>
+        </div>
+      </div>
+      <div class="macro-bars">
+        ${macroRow('PROTEIN', p, 'g', 'bar-p', max, '#7EC8E3')}
+        ${macroRow('CARBS',   c, 'g', 'bar-c', max, 'var(--warn)')}
+        ${macroRow('FATS',    f, 'g', 'bar-f', max, 'var(--danger)')}
+      </div>
+      <div class="serving-note">
+        📌 Detected: ${m.matched.join(', ')} &nbsp;·&nbsp; Estimates based on typical servings
+      </div>
+    </div>
+    <div class="card result-panel" style="padding:14px 18px;">
+      <div style="display:flex;justify-content:space-around;text-align:center;gap:8px">
+        ${miniStat(p, 'Protein', '#7EC8E3')}
+        ${miniStat(c, 'Carbs',   'var(--warn)')}
+        ${miniStat(f, 'Fats',    'var(--danger)')}
+        ${miniStat(Math.round(p*4 + c*4 + f*9), 'kCal total', 'var(--accent)')}
+      </div>
+    </div>`;
+
+    res.innerHTML = html;
+    res.classList.remove('hidden');
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    document.getElementById('n-spinner').style.display = 'none';
+
+    requestAnimationFrame(() => {
+      res.querySelectorAll('.bar-fill').forEach(b => {
+        b.style.width = b.dataset.width + '%';
+      });
+    });
+
+    res.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 900);
+}
+
+function macroRow(name, grams, unit, barClass, max, color) {
+  const pct = Math.round((grams / max) * 100);
+  return `
+  <div class="macro-row">
+    <div class="macro-row-header">
+      <span class="macro-name">${name}</span>
+      <span class="macro-grams" style="color:${color}">${grams}${unit}</span>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill ${barClass}" data-width="${pct}" style="width:0"></div>
+    </div>
+  </div>`;
+}
+
+function miniStat(val, lbl, color) {
+  return `<div>
+    <div style="font-family:var(--font-d);font-size:22px;color:${color};text-shadow:0 0 10px ${color}30">${val}</div>
+    <div style="font-family:var(--font-m);font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-top:3px">${lbl}</div>
+  </div>`;
+}
+
+/* ================================================================
+   VIEW 3 — SMART TIMER
+================================================================ */
+let timerInterval  = null;   
+let elapsedSeconds = 0;      
+let presetSeconds  = 0;      
+let isRunning      = false;
+let isPaused       = false;
+
+const RING_CIRC = 2 * Math.PI * 110; 
+
+function setPreset(btn, seconds) {
+  if (isRunning) return;
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  presetSeconds = seconds;
+  elapsedSeconds = 0;
+  updateTimerDisplay(0);
+  updateRing(0, seconds);
+}
+
+function updateTimerDisplay(secs) {
+  const m = String(Math.floor(secs / 60)).padStart(2, '0');
+  const s = String(secs % 60).padStart(2, '0');
+  document.getElementById('timer-display').textContent = `${m}:${s}`;
+}
+
+function updateRing(elapsed, total) {
+  const ring = document.getElementById('ring-prog');
+  if (total > 0) {
+    const progress = Math.min(elapsed / total, 1);
+    ring.style.strokeDashoffset = RING_CIRC * (1 - progress);
+    if (progress < 0.5)       ring.style.stroke = 'var(--success)';
+    else if (progress < 0.85) ring.style.stroke = 'var(--accent)';
+    else                      ring.style.stroke = 'var(--danger)';
+  } else {
+    ring.style.stroke = 'var(--accent)';
+    ring.style.strokeDashoffset = 0;
+  }
+}
+
+function setTimerStatus(text, cls) {
+  const el = document.getElementById('timer-status');
+  el.textContent = text;
+  el.className = 'timer-status ' + (cls || '');
+}
+
+function timerStart() {
+  if (isRunning) return;
+  isRunning = true;
+  isPaused  = false;
+  setTimerStatus('RUNNING', 'running');
+  document.getElementById('btn-start').style.opacity = '.45';
+
+  timerInterval = setInterval(() => {
+    elapsedSeconds++;
+    const display = presetSeconds > 0
+      ? Math.max(presetSeconds - elapsedSeconds, 0)  
+      : elapsedSeconds;                              
+
+    updateTimerDisplay(display);
+    updateRing(elapsedSeconds, presetSeconds);
+
+    if (presetSeconds > 0 && elapsedSeconds >= presetSeconds) {
+      clearInterval(timerInterval);
+      isRunning = false;
+      setTimerStatus('DONE! ✓', '');
+      document.getElementById('timer-display').style.color = 'var(--success)';
+      document.getElementById('btn-start').style.opacity = '1';
+    }
+  }, 1000);
+}
+
+function timerPause() {
+  if (!isRunning) return;
+  clearInterval(timerInterval);
+  isRunning = false;
+  isPaused  = true;
+  setTimerStatus('PAUSED', 'paused');
+  document.getElementById('btn-start').style.opacity = '1';
+}
+
+function timerReset() {
+  clearInterval(timerInterval);
+  isRunning      = false;
+  isPaused       = false;
+  elapsedSeconds = 0;
+
+  updateTimerDisplay(presetSeconds > 0 ? presetSeconds : 0);
+  updateRing(0, presetSeconds);
+  setTimerStatus('READY', '');
+  document.getElementById('timer-display').style.color = 'var(--text-h)';
+  document.getElementById('btn-start').style.opacity = '1';
+}
+
+/* ================================================================
+   UTILITY
+================================================================ */
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+</script>
+</body>
+</html>
