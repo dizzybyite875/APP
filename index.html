@@ -847,56 +847,38 @@ const HYPE = [
   { e:'🎯', t:'Precision. Volume. Grit. Every box checked. Prime Time.' },
 ];
 
-function handleWorkoutLog() {
+async function handleWorkoutLog() {
   const text = workoutText.value.trim();
   const btn  = document.getElementById('btn-log-workout');
   const res  = document.getElementById('workout-results');
 
-  if (!text) {
-    workoutText.style.borderColor = 'rgba(255,94,94,.5)';
-    setTimeout(() => workoutText.style.borderColor = '', 2000);
-    workoutText.focus();
-    return;
-  }
+  if (!text) return;
 
   btn.disabled = true;
   btn.classList.add('loading');
   document.getElementById('w-spinner').style.display = 'block';
-  res.classList.add('hidden');
 
-  setTimeout(() => {
-    const exercises = parseWorkout(text);
-    const totalSets   = exercises.reduce((s, e) => s + (e.sets||0), 0);
-    let   totalVol    = 0;
-    
-    exercises.forEach(e => {
-      if (e.sets && e.reps && e.weight && e.weight !== 'BW') {
-        totalVol += e.sets * e.reps * parseFloat(e.weight);
-      }
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        prompt: `You are Prime Fitmees AI. Parse this workout and return a solid summary: ${text}` 
+      })
     });
 
-    let html = `<div class="stat-row result-panel">
-      <div class="stat-pill" style="animation-delay:.02s">
-        <div class="stat-val">${exercises.length}</div>
-        <div class="stat-lbl">Exercises</div>
-      </div>
-      <div class="stat-pill" style="animation-delay:.06s">
-        <div class="stat-val">${totalSets}</div>
-        <div class="stat-lbl">Total Sets</div>
-      </div>
-      <div class="stat-pill" style="animation-delay:.10s">
-        <div class="stat-val">${totalVol > 0 ? (totalVol/1000).toFixed(1)+'k' : '—'}</div>
-        <div class="stat-lbl">Volume</div>
-      </div>
-    </div>`;
+    const data = await response.json();
+    res.innerHTML = `<div class="card result-panel"><p class="hype-text">${data.reply || "Workout logged!"}</p></div>`;
+    res.classList.remove('hidden');
+  } catch (error) {
+    res.innerHTML = `<p style="color:var(--danger)">Connection failed. Check your Vercel API key!</p>`;
+    res.classList.remove('hidden');
+  }
 
-    html += `<div class="exercise-list result-panel">`;
-    exercises.forEach((ex, i) => {
-      const setTag = `<span class="tag tag-s">🔁 ${ex.sets} sets</span>`;
-      const repTag = ex.reps   ? `<span class="tag tag-r">✕ ${ex.reps} reps</span>` : '';
-      const wTag   = ex.weight ? `<span class="tag tag-w">⚖ ${ex.weight}</span>` : '';
-      html += `
-        <div class="ex-card" style="animation-delay:${i*0.06}s">
+  btn.disabled = false;
+  btn.classList.remove('loading');
+  document.getElementById('w-spinner').style.display = 'none';
+}
           <div class="ex-num">${String(i+1).padStart(2,'0')}</div>
           <div class="ex-body">
             <div class="ex-name">${esc(ex.name)}</div>
