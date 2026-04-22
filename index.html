@@ -848,6 +848,9 @@ const HYPE = [
 ];
 
 async function handleWorkoutLog() {
+  // THIS LINE BELOW IS THE KEY - DON'T SKIP IT
+  const workoutText = document.getElementById('workout-text');
+  
   const text = workoutText.value.trim();
   const btn  = document.getElementById('btn-log-workout');
   const res  = document.getElementById('workout-results');
@@ -871,8 +874,14 @@ async function handleWorkoutLog() {
     res.innerHTML = `<div class="card result-panel"><p class="hype-text">${data.reply || "Workout logged!"}</p></div>`;
     res.classList.remove('hidden');
   } catch (error) {
-    res.innerHTML = `<p style="color:var(--danger)">Connection failed. Check your Vercel API key!</p>`;
+    res.innerHTML = `<p style="color:var(--danger)">Check your API key in Vercel!</p>`;
     res.classList.remove('hidden');
+  }
+
+  btn.disabled = false;
+  btn.classList.remove('loading');
+  document.getElementById('w-spinner').style.display = 'none';
+}
   }
 
   btn.disabled = false;
